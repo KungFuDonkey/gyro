@@ -5,19 +5,19 @@
 
 #define smoothingsize 5
 #define boundssize 50
-#define movementbounds 350
+#define movementbounds 375
 
-#define restingx 170
-#define restingy 255
-#define restingz 480
+#define restingx 240
+#define restingy 250
+#define restingz 500
 
-#define sidewaysx 30
-#define sidewaysy 255
-#define sidewaysz 180
+#define sidewaysx 20
+#define sidewaysy 250
+#define sidewaysz 250
 
-#define sidewaysdownx 200
-#define sidewaysdowny 15
-#define sidewaysdownz 210
+#define sidewaysdownx 240
+#define sidewaysdowny 7
+#define sidewaysdownz 240
 
 int statearray[5]; 
 
@@ -33,6 +33,7 @@ int16_t gxt;
 int16_t gyt;
 int16_t gzt;
 
+unsigned long lastStateTime;
 long rx;
 long ry;
 long rz;
@@ -48,7 +49,7 @@ long fz;
 #define sidewaysfront 4
 #define rotate 5
 
-
+bool CheckBounds(int16_t value = 0, int bounds = 0, int = boundssize);
 
 
 unsigned long prevTime;
@@ -118,8 +119,10 @@ void loop()
   Serial.print("\t");
   Serial.println(fz);
   */
+
   CheckStates();
   prevTime = millis();
+  CheckGestures();
 }
 
 void CheckStates(){
@@ -130,6 +133,50 @@ void CheckStates(){
   Checksidewaysfront();
   Checkrotatestate();
 }
+
+void CheckGestures(){
+  if(statearray[0] == 3)
+  {
+    clearStates();
+    waterPlant();
+  }
+   if(statearray[0] == 5)
+  {
+    clearStates();
+    updateValues();
+  }
+  else if(statearray[0] == 2 && millis() - lastStateTime >= 2000)
+  {
+    clearStates();
+    toggleMode();
+  }
+  else if(statearray[0] == 4 && (millis() - lastStateTime) >= 2000)
+  {
+    clearStates();
+    nextMenu();
+  }
+  else
+  {
+    
+  }
+}
+
+void waterPlant(){
+  Serial.println("water plant");
+}
+
+void toggleMode(){
+  Serial.println("toggle");
+}
+
+void nextMenu(){
+  Serial.println("nextMenu");
+}
+
+void updateValues(){
+  Serial.println("updateValues");
+}
+
 
 long average(long* value){
   long answer = 0;
@@ -150,17 +197,18 @@ long average2(long* value){
 unsigned long restingtimer = 500;
 #define TIMER 500
 
-unsigned long sidewaystimer = 500;
+unsigned long sidewaystimer = 100;
 
-unsigned long sidewaysdowntimer = 500;
+unsigned long sidewaysdowntimer = 200;
 
 
 unsigned long rotatetimer = 500;
 
 void Checkresting(){ 
-  if(statearray[0] != resting && CheckBounds(rx,restingx) && CheckBounds(ry,restingy) && CheckBounds(rz,restingz))
+  if(statearray[0] != resting && CheckBounds(rx,restingx, 55) && CheckBounds(ry,restingy, 55) && CheckBounds(rz,restingz, 55))
   {
     if(millis() - restingtimer >= TIMER){
+      CheckGestures();
       clearStates();
       changeState(resting);
       restingtimer = millis();
@@ -172,10 +220,10 @@ void Checkresting(){
 }
 
 void Checksideways(){
-  if(statearray[0] != sideways && 
-     CheckBounds(rx,sidewaysx)  && 
-     CheckBounds(ry,sidewaysy)  && 
-     CheckBounds(rz,sidewaysz))
+  if(statearray[0] == resting && 
+     CheckBounds(rx,sidewaysx, 80)  && 
+     CheckBounds(ry,sidewaysy, 80)  && 
+     CheckBounds(rz,sidewaysz, 80))
   {
       if(millis() - sidewaystimer >= TIMER){
         changeState(sideways);
@@ -187,10 +235,11 @@ void Checksideways(){
 }
 
 void Checksidewaysdown(){
-  if(statearray[0] != sidewaysdown  && 
-     statearray[0] != sidewaysfront &&
-     CheckBounds(rx,sidewaysdownx)  && 
-     CheckBounds(ry,sidewaysdowny)  && 
+  if((statearray[0] == resting || statearray[0] == sideways) &&
+     statearray[0] != sidewaysfront                           &&
+     statearray[0] != undefined                               &&
+     CheckBounds(rx,sidewaysdownx)                            && 
+     CheckBounds(ry,sidewaysdowny)                            && 
      CheckBounds(rz,sidewaysdownz))
   {
       if(millis() - sidewaysdowntimer >= TIMER){
@@ -205,8 +254,11 @@ bool xmovement = false;
 void Checksidewaysfront(){
   if(statearray[0] == sideways && xmovement)
   {
-      changeState(sidewaysfront);
-      return;
+      if(millis() - lastStateTime >= 200)
+      {
+        changeState(sidewaysfront);
+        return;
+      }
   }
 }
 
@@ -242,6 +294,7 @@ void changeState(int value){
     statearray[i] = statearray[i - 1];
   }
   statearray[0] = value;
+  lastStateTime = millis();
   Serial.println(value);
 }
 
@@ -251,9 +304,6 @@ void clearStates(){
   }
 }
 
-bool CheckBounds(int16_t value, int bounds){
-  return value > bounds - boundssize && value < bounds + boundssize;
+bool CheckBounds(int16_t value, int bounds, int bsize){
+  return value > bounds - bsize && value < bounds + bsize;
 }
-
-
-
