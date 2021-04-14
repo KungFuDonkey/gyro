@@ -162,19 +162,19 @@ void CheckGestures(){
 }
 
 void waterPlant(){
-  Serial.println("water plant");
+  Serial.println("a");
 }
 
 void toggleMode(){
-  Serial.println("toggle");
+  Serial.println("b");
 }
 
 void nextMenu(){
-  Serial.println("nextMenu");
+  Serial.println("c");
 }
 
 void updateValues(){
-  Serial.println("updateValues");
+  Serial.println("d");
 }
 
 
@@ -295,7 +295,7 @@ void changeState(int value){
   }
   statearray[0] = value;
   lastStateTime = millis();
-  Serial.println(value);
+  //Serial.println(value);
 }
 
 void clearStates(){
